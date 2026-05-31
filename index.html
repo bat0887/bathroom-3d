@@ -740,19 +740,18 @@
         rbox(W, backTileH, 0.05, backWallBoxMat(W, backTileH), W/2, H1 - backTileH / 2, L);
 
         // ── Gypsum board wall ──────────────────────────────────────────────────────
-        const gypsumMat = new THREE.MeshLambertMaterial({ color: 0xddd9d0 });
-        rbox(W, 1.0, GYP, wallBoxMat(W, 1.0), W/2, 0.5, gypsumZ);
+        rbox(W, 1.0, GYP, backWallBoxMat(W, 1.0), W/2, 0.5, gypsumZ);
         if (gypsumTopH > 0.01) {
-            rbox(roomGW, gypsumTopH, GYP, wallBoxMat(roomGW, gypsumTopH), mirrorX, gypsumTopY, gypsumZ);
+            rbox(roomGW, gypsumTopH, GYP, backWallBoxMat(roomGW, gypsumTopH), mirrorX, gypsumTopY, gypsumZ);
         }
         // horizontal cap — closes the top of the pipe chase (y = 1.0)
-        rbox(W, GYP, PC, gypsumMat, W/2, 1.0 + GYP / 2, L - PC / 2);
+        rbox(W, GYP, PC, backWallBoxMat(W, PC), W/2, 1.0 + GYP / 2, L - PC / 2);
         // vertical side panels — close the gap between mirror wall sides and back wall
         const sideGapH = Math.max(0, H1 - 1.0);
         if (sideGapH > 0.005 && PC > 0.01) {
             const sideY = 1.0 + sideGapH / 2;
-            rbox(GYP, sideGapH, PC, gypsumMat, mirrorX - roomGW / 2, sideY, L - PC / 2);
-            rbox(GYP, sideGapH, PC, gypsumMat, mirrorX + roomGW / 2, sideY, L - PC / 2);
+            rbox(GYP, sideGapH, PC, backWallBoxMat(PC, sideGapH), mirrorX - roomGW / 2, sideY, L - PC / 2);
+            rbox(GYP, sideGapH, PC, backWallBoxMat(PC, sideGapH), mirrorX + roomGW / 2, sideY, L - PC / 2);
         }
 
         // ── Side walls ─────────────────────────────────────────────────────────────
@@ -779,9 +778,9 @@
         // ── Front wall ─────────────────────────────────────────────────────────────
         const leftW = doorX - doorW/2, rightW = W - (doorX + doorW/2), topH = H0 - doorH;
         const fT = 0.05;
-        if (leftW  > 0) rbox(leftW,  H0,  fT, backWallBoxMat(leftW,  H0),  leftW/2,        H0/2,         0);
-        if (rightW > 0) rbox(rightW, H0,  fT, backWallBoxMat(rightW, H0),  W-rightW/2,     H0/2,         0);
-        if (topH   > 0) rbox(doorW,  topH, fT, backWallBoxMat(doorW, topH), doorX,          doorH+topH/2, 0);
+        if (leftW  > 0) rbox(leftW,  H0,  fT, wallBoxMat(leftW,  H0),  leftW/2,        H0/2,         0);
+        if (rightW > 0) rbox(rightW, H0,  fT, wallBoxMat(rightW, H0),  W-rightW/2,     H0/2,         0);
+        if (topH   > 0) rbox(doorW,  topH, fT, wallBoxMat(doorW, topH), doorX,          doorH+topH/2, 0);
         rbox(fT, doorH+fT, fT, doorFrameMat, doorX-doorW/2, doorH/2, 0);
         rbox(fT, doorH+fT, fT, doorFrameMat, doorX+doorW/2, doorH/2, 0);
         rbox(doorW+fT*2, fT, fT, doorFrameMat, doorX, doorH, 0);
