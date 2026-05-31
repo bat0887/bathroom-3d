@@ -1041,8 +1041,8 @@
 
         // ── Access hatch (люк) — between toilet and sink ──────────────────────────
         {
-            const hatchX = (0.57 + sinkX - 0.25) / 2;  // midpoint between toilet right edge and sink left edge
-            const hatchY = 0.50;                         // 50 cm from floor — comfortably reachable
+            const hatchX = sinkX;   // hidden behind sink cabinet
+            const hatchY = 0.30;    // lower portion — accessible when cabinet is open/removed
             const hatchW = 0.20;
             const hatchH = 0.26;
             const hatchFrameMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
