@@ -425,6 +425,8 @@
             <input id="room-length" type="number" value="3.21" min="2" max="8" step="0.01" />
             <label>Pipe chase depth (m)</label>
             <input id="pipe-chase" type="number" value="0.40" min="0.10" max="1.50" step="0.01" />
+            <label>Plumbing wall height (m)</label>
+            <input id="gypsum-height" type="number" value="1.00" min="0.50" max="2.00" step="0.01" />
             <label>Mirror wall width (m)</label>
             <input id="gypsum-width" type="number" value="1.10" min="0.30" max="2.34" step="0.01" />
             <label>Sink X position (m)</label>
@@ -512,6 +514,7 @@
     let roomL  = 3.21;   // room length (Z)
     let roomPC = 0.40;   // pipe chase depth (back wall → gypsum wall)
     let roomGW = 1.10;   // gypsum upper extension width (mirror wall above sink)
+    let roomGypsumH = 1.00; // gypsum board wall height (lower panel)
     let roomSinkX   = 1.17; // sink X position (centre)
     let roomMirrorX = 1.17; // mirror wall (upper gypsum extension) X position (centre)
     let roomMirrorY = 1.48; // mirror glass Y position (centre)
@@ -738,8 +741,8 @@
         const ceilAtGypsum = L > flatZ
             ? H0 - (H0 - H1) * (gypsumZ - flatZ) / (L - flatZ)
             : H0;
-        const gypsumTopH = Math.max(0, parseFloat((ceilAtGypsum - 1.0).toFixed(3)));
-        const gypsumTopY = 1.0 + gypsumTopH / 2;
+        const gypsumTopH = Math.max(0, parseFloat((ceilAtGypsum - roomGypsumH).toFixed(3)));
+        const gypsumTopY = roomGypsumH + gypsumTopH / 2;
 
         const sinkX   = roomSinkX;
         const mirrorX = roomMirrorX;
@@ -775,16 +778,17 @@
         rbox(W, backTileH, 0.05, backWallBoxMat(W, backTileH), W/2, H1 - backTileH / 2, L);
 
         // ── Gypsum board wall ──────────────────────────────────────────────────────
-        rbox(W, 1.0, GYP, backWallBoxMat(W, 1.0), W/2, 0.5, gypsumZ);
+        const GH = roomGypsumH;
+        rbox(W, GH, GYP, backWallBoxMat(W, GH), W/2, GH / 2, gypsumZ);
         if (gypsumTopH > 0.01) {
             rbox(roomGW, gypsumTopH, GYP, backWallBoxMat(roomGW, gypsumTopH), mirrorX, gypsumTopY, gypsumZ);
         }
-        // horizontal cap — closes the top of the pipe chase (y = 1.0)
-        rbox(W, GYP, PC, backWallBoxMat(W, PC), W/2, 1.0 + GYP / 2, L - PC / 2);
+        // horizontal cap — closes the top of the pipe chase
+        rbox(W, GYP, PC, backWallBoxMat(W, PC), W/2, GH + GYP / 2, L - PC / 2);
         // vertical side panels — close the gap between mirror wall sides and back wall
-        const sideGapH = Math.max(0, H1 - 1.0);
+        const sideGapH = Math.max(0, H1 - GH);
         if (sideGapH > 0.005 && PC > 0.01) {
-            const sideY = 1.0 + sideGapH / 2;
+            const sideY = GH + sideGapH / 2;
             rbox(GYP, sideGapH, PC, backWallBoxMat(PC, sideGapH), mirrorX - roomGW / 2, sideY, L - PC / 2);
             rbox(GYP, sideGapH, PC, backWallBoxMat(PC, sideGapH), mirrorX + roomGW / 2, sideY, L - PC / 2);
         }
@@ -872,7 +876,7 @@
         const O = 0.012; // offset in front of wall surface
         const boardSurfaces = [
             // gypsum wall lower — front face toward room (−z from gypsumZ)
-            [W,      1.0,        W / 2,    0.5,                     gypsumZ - GYP / 2 - O, Math.PI],
+            [W,      GH,         W / 2,    GH / 2,                  gypsumZ - GYP / 2 - O, Math.PI],
             // gypsum wall upper extension
             ...(gypsumTopH > 0.01 ? [[roomGW, gypsumTopH, mirrorX, gypsumTopY, gypsumZ - GYP / 2 - O, Math.PI]] : []),
             // back wall — full height H1
@@ -953,7 +957,7 @@
         const ceilAtGypsum = L > flatZ
             ? H0 - (H0 - H1) * (gypsumZ - flatZ) / (L - flatZ)
             : H0;
-        const gypsumTopH = Math.max(0, ceilAtGypsum - 1.0);
+        const gypsumTopH = Math.max(0, ceilAtGypsum - roomGypsumH);
 
         // floor
         const floorArea = W * L;
@@ -965,7 +969,7 @@
         const entranceArea = W * H0 - doorW * doorH;
 
         // gypsum wall tiled face (lower full-width + upper extension)
-        const gypsumArea = W * 1.0 + roomGW * gypsumTopH;
+        const gypsumArea = W * roomGypsumH + roomGW * gypsumTopH;
 
         // back wall — top 1 m strip only
         const backWallArea = W * Math.min(H1, 1.0);
@@ -1100,6 +1104,7 @@
     function applyRoomParams() {
         const newL  = parseFloat(document.getElementById('room-length').value);
         const newPC = parseFloat(document.getElementById('pipe-chase').value);
+        const newGH = parseFloat(document.getElementById('gypsum-height').value);
         const newGW = parseFloat(document.getElementById('gypsum-width').value);
         const newSX = parseFloat(document.getElementById('sink-x').value);
         const newMX  = parseFloat(document.getElementById('mirror-x').value);
@@ -1108,10 +1113,11 @@
         const newTubL = parseFloat(document.getElementById('tub-l').value);
         const newShW  = parseFloat(document.getElementById('sh-w').value);
         const newShD  = parseFloat(document.getElementById('sh-d').value);
-        if (isNaN(newL) || isNaN(newPC) || isNaN(newGW) || isNaN(newSX) || isNaN(newMX) || isNaN(newMY)
+        if (isNaN(newL) || isNaN(newPC) || isNaN(newGH) || isNaN(newGW) || isNaN(newSX) || isNaN(newMX) || isNaN(newMY)
             || isNaN(newTubW) || isNaN(newTubL) || isNaN(newShW) || isNaN(newShD)) { return; }
         roomL       = Math.max(2,    Math.min(8,      newL));
         roomPC      = Math.max(0.1,  Math.min(1.5,    newPC));
+        roomGypsumH = Math.max(0.50, Math.min(2.00,   newGH));
         roomGW      = Math.max(0.30, Math.min(W,      newGW));
         roomSinkX   = Math.max(0.30, Math.min(W-0.30, newSX));
         roomMirrorX = Math.max(roomGW/2, Math.min(W - roomGW/2, newMX));
@@ -1129,7 +1135,7 @@
 
     document.getElementById('room-apply').addEventListener('click', applyRoomParams);
 
-    ['room-length', 'pipe-chase', 'gypsum-width', 'sink-x', 'mirror-x', 'mirror-y', 'tub-w', 'tub-l', 'sh-w', 'sh-d'].forEach(id => {
+    ['room-length', 'pipe-chase', 'gypsum-height', 'gypsum-width', 'sink-x', 'mirror-x', 'mirror-y', 'tub-w', 'tub-l', 'sh-w', 'sh-d'].forEach(id => {
         document.getElementById(id).addEventListener('input', applyRoomParams);
     });
 
@@ -1169,7 +1175,7 @@
     // ─── Presets ──────────────────────────────────────────────────────────────────
     const PRESET_KEY = 'bathroom_presets';
     const PRESET_FIELDS = [
-        'room-length', 'pipe-chase', 'gypsum-width', 'sink-x', 'mirror-x', 'mirror-y',
+        'room-length', 'pipe-chase', 'gypsum-height', 'gypsum-width', 'sink-x', 'mirror-x', 'mirror-y',
         'tub-w', 'tub-l', 'sh-w', 'sh-d',
         'floor-size', 'wall-size',
         'floor-tile-price', 'wall-tile-price',
