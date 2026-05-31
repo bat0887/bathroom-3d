@@ -405,6 +405,8 @@
             <input id="sink-x" type="number" value="1.17" min="0.30" max="2.04" step="0.01" />
             <label>Mirror wall X position (m)</label>
             <input id="mirror-x" type="number" value="1.17" min="0.30" max="2.04" step="0.01" />
+            <label>Mirror Y position (m)</label>
+            <input id="mirror-y" type="number" value="1.48" min="1.00" max="2.30" step="0.01" />
             <button id="room-apply">Rebuild room</button>
         </div>
     </div>
@@ -471,6 +473,7 @@
     let roomGW = 1.10;   // gypsum upper extension width (mirror wall above sink)
     let roomSinkX   = 1.17; // sink X position (centre)
     let roomMirrorX = 1.17; // mirror wall (upper gypsum extension) X position (centre)
+    let roomMirrorY = 1.48; // mirror glass Y position (centre)
 
     // ─── Tile system — resizable floor + wall tiles ───────────────────────────────
     const _tileTextures  = [];        // all textures (for image reload)
@@ -759,8 +762,8 @@
         rbox(0.44, 0.1,  0.36, ceramicMat, sinkX, 0.82, sinkZ);
         rbox(0.04, 0.12, 0.04, chromeMat, sinkX, 0.94, sinkZ+0.12);
         rbox(0.14, 0.03, 0.04, chromeMat, sinkX, 1.02, sinkZ+0.12);
-        rbox(0.48, 0.62, 0.03, glassMat,  sinkX, 1.48, gypsumFace-0.02);
-        rbox(0.50, 0.64, 0.02, new THREE.MeshLambertMaterial({color:0x888870}), sinkX, 1.48, gypsumFace-0.03);
+        rbox(0.48, 0.62, 0.03, glassMat,  sinkX, roomMirrorY, gypsumFace-0.02);
+        rbox(0.50, 0.64, 0.02, new THREE.MeshLambertMaterial({color:0x888870}), sinkX, roomMirrorY, gypsumFace-0.03);
 
         // ── Shower ─────────────────────────────────────────────────────────────────
         const shW=0.89, shD=0.89, shH=2.0, shX=W-shW/2, shZ=shD/2;
@@ -956,12 +959,14 @@
         const newGW = parseFloat(document.getElementById('gypsum-width').value);
         const newSX = parseFloat(document.getElementById('sink-x').value);
         const newMX = parseFloat(document.getElementById('mirror-x').value);
-        if (isNaN(newL) || isNaN(newPC) || isNaN(newGW) || isNaN(newSX) || isNaN(newMX)) { return; }
+        const newMY = parseFloat(document.getElementById('mirror-y').value);
+        if (isNaN(newL) || isNaN(newPC) || isNaN(newGW) || isNaN(newSX) || isNaN(newMX) || isNaN(newMY)) { return; }
         roomL       = Math.max(2,    Math.min(8,      newL));
         roomPC      = Math.max(0.1,  Math.min(1.5,    newPC));
         roomGW      = Math.max(0.30, Math.min(W,      newGW));
         roomSinkX   = Math.max(0.30, Math.min(W-0.30, newSX));
         roomMirrorX = Math.max(roomGW/2, Math.min(W - roomGW/2, newMX));
+        roomMirrorY = Math.max(1.00, Math.min(2.30, newMY));
         buildRoom();
         updateFloorTiles(_floorTW, _floorTH);
         updateWallTiles(_wallTW, _wallTH);
@@ -970,7 +975,7 @@
 
     document.getElementById('room-apply').addEventListener('click', applyRoomParams);
 
-    ['room-length', 'pipe-chase', 'gypsum-width', 'sink-x', 'mirror-x'].forEach(id => {
+    ['room-length', 'pipe-chase', 'gypsum-width', 'sink-x', 'mirror-x', 'mirror-y'].forEach(id => {
         document.getElementById(id).addEventListener('input', applyRoomParams);
     });
 
