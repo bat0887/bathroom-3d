@@ -246,6 +246,30 @@
                 Height (back wall): 1.4 m<br>
                 Ceiling: sloped<br>
                 Door: 1 m centered
+                <hr class="est-divider">
+                <div class="est-section">Bathtub</div>
+                <div class="est-row">
+                    <span class="est-label">Width</span>
+                    <input id="tub-w" type="number" value="0.80" min="0.50" max="1.20" step="0.01" style="width:60px;text-align:right;background:#1a1a2e;border:1px solid #444;border-radius:4px;color:#e0e0e0;font-size:12px;padding:2px 4px;outline:none;" />
+                    <span class="est-unit">m</span>
+                </div>
+                <div class="est-row">
+                    <span class="est-label">Length</span>
+                    <input id="tub-l" type="number" value="1.70" min="1.20" max="2.00" step="0.01" style="width:60px;text-align:right;background:#1a1a2e;border:1px solid #444;border-radius:4px;color:#e0e0e0;font-size:12px;padding:2px 4px;outline:none;" />
+                    <span class="est-unit">m</span>
+                </div>
+                <hr class="est-divider">
+                <div class="est-section">Shower</div>
+                <div class="est-row">
+                    <span class="est-label">Width</span>
+                    <input id="sh-w" type="number" value="0.89" min="0.60" max="1.50" step="0.01" style="width:60px;text-align:right;background:#1a1a2e;border:1px solid #444;border-radius:4px;color:#e0e0e0;font-size:12px;padding:2px 4px;outline:none;" />
+                    <span class="est-unit">m</span>
+                </div>
+                <div class="est-row">
+                    <span class="est-label">Depth</span>
+                    <input id="sh-d" type="number" value="0.89" min="0.60" max="1.50" step="0.01" style="width:60px;text-align:right;background:#1a1a2e;border:1px solid #444;border-radius:4px;color:#e0e0e0;font-size:12px;padding:2px 4px;outline:none;" />
+                    <span class="est-unit">m</span>
+                </div>
             </div>
         </div>
         <div id="estimate-panel" class="panel">
@@ -410,16 +434,6 @@
             <label>Mirror Y position (m)</label>
             <input id="mirror-y" type="number" value="1.48" min="1.00" max="2.30" step="0.01" />
             <button id="room-apply">Rebuild room</button>
-            <hr class="panel-divider">
-            <label>Bathtub width (m)</label>
-            <input id="tub-w" type="number" value="0.80" min="0.50" max="1.20" step="0.01" />
-            <label>Bathtub length (m)</label>
-            <input id="tub-l" type="number" value="1.70" min="1.20" max="2.00" step="0.01" />
-            <hr class="panel-divider">
-            <label>Shower width (m)</label>
-            <input id="sh-w" type="number" value="0.89" min="0.60" max="1.50" step="0.01" />
-            <label>Shower depth (m)</label>
-            <input id="sh-d" type="number" value="0.89" min="0.60" max="1.50" step="0.01" />
             <hr class="panel-divider">
             <label>Human figure</label>
             <label class="est-check-label" style="pointer-events:auto">
