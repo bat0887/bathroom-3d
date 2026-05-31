@@ -270,6 +270,11 @@
                     <input id="sh-d" type="number" value="0.89" min="0.60" max="1.50" step="0.01" style="width:60px;text-align:right;background:#1a1a2e;border:1px solid #444;border-radius:4px;color:#e0e0e0;font-size:12px;padding:2px 4px;outline:none;" />
                     <span class="est-unit">m</span>
                 </div>
+                <hr class="est-divider">
+                <label class="est-check-label">
+                    <input type="checkbox" id="hide-sink-cabinet">
+                    Прибрати тумбу (показати люк)
+                </label>
             </div>
         </div>
 
@@ -383,6 +388,12 @@
                     <span class="est-unit">₴</span>
                 </div>
                 <div class="est-note" style="color:#888;margin-bottom:6px;">Ванна, душ, унітаз, умивальник</div>
+                <div class="est-row">
+                    <span class="est-label">Монтаж ревізійного люка</span>
+                    <span class="est-value" style="color:#fff;">600</span>
+                    <span class="est-unit">₴</span>
+                </div>
+                <div class="est-note" style="color:#888;margin-bottom:6px;">Врізка у ГКЛ + встановлення рамки, прихований за тумбою</div>
 
                 <div class="est-section" style="color:#90ee90;">Електрика</div>
                 <div class="est-row">
@@ -395,7 +406,7 @@
 
                 <div class="est-row" style="margin-bottom:2px;">
                     <span style="color:#aaa;font-size:11px;">Разом (середній майстер)</span>
-                    <span style="color:#ffd700;font-weight:bold;font-size:14px;text-align:right;">62 000</span>
+                    <span style="color:#ffd700;font-weight:bold;font-size:14px;text-align:right;">62 600</span>
                     <span style="color:#aaa;font-size:11px;">₴</span>
                 </div>
 
@@ -789,9 +800,10 @@
     // ─── Room mesh / light tracking ──────────────────────────────────────────────
     const roomMeshes = [];
     const roomLights = [];
-    const _aquaMeshes      = [];
-    const _rigipsMeshes    = [];
-    const _zakladnaMeshes  = [];
+    const _aquaMeshes         = [];
+    const _rigipsMeshes       = [];
+    const _zakladnaMeshes     = [];
+    const _sinkCabinetMeshes  = [];
 
     function _disposeMeshArr(arr) {
         arr.forEach(m => {
@@ -819,6 +831,7 @@
         _disposeMeshArr(_aquaMeshes);
         _disposeMeshArr(_rigipsMeshes);
         _disposeMeshArr(_zakladnaMeshes);
+        _sinkCabinetMeshes.length = 0;
     }
 
     // ─── Board overlay helpers ────────────────────────────────────────────────────
@@ -1000,12 +1013,14 @@
         rbox(0.36, 0.04, 0.50, ceramicMat, 0.38, 0.40, toiZ);
 
         // ── Sink ───────────────────────────────────────────────────────────────────
-        rbox(0.5,  0.78, 0.42, new THREE.MeshLambertMaterial({color:0xdfd0b8}), sinkX, 0.39, sinkZ);
-        rbox(0.44, 0.1,  0.36, ceramicMat, sinkX, 0.82, sinkZ);
-        rbox(0.04, 0.12, 0.04, chromeMat, sinkX, 0.94, sinkZ+0.12);
-        rbox(0.14, 0.03, 0.04, chromeMat, sinkX, 1.02, sinkZ+0.12);
+        _sinkCabinetMeshes.push(rbox(0.5,  0.78, 0.42, new THREE.MeshLambertMaterial({color:0xdfd0b8}), sinkX, 0.39, sinkZ));
+        _sinkCabinetMeshes.push(rbox(0.44, 0.1,  0.36, ceramicMat, sinkX, 0.82, sinkZ));
+        _sinkCabinetMeshes.push(rbox(0.04, 0.12, 0.04, chromeMat, sinkX, 0.94, sinkZ+0.12));
+        _sinkCabinetMeshes.push(rbox(0.14, 0.03, 0.04, chromeMat, sinkX, 1.02, sinkZ+0.12));
         rbox(0.48, 0.62, 0.03, glassMat,  sinkX, roomMirrorY, gypsumFace-0.02);
         rbox(0.50, 0.64, 0.02, new THREE.MeshLambertMaterial({color:0x888870}), sinkX, roomMirrorY, gypsumFace-0.03);
+        { const hideCab = document.getElementById('hide-sink-cabinet')?.checked ?? false;
+          _sinkCabinetMeshes.forEach(m => m.visible = !hideCab); }
 
         // ── Закладна (sink mounting backing boards) ────────────────────────────────
         {
@@ -1362,6 +1377,9 @@
     });
     document.getElementById('show-zakladna').addEventListener('change', (e) => {
         _zakladnaMeshes.forEach(m => m.visible = e.target.checked);
+    });
+    document.getElementById('hide-sink-cabinet').addEventListener('change', (e) => {
+        _sinkCabinetMeshes.forEach(m => m.visible = !e.target.checked);
     });
 
     // ─── Presets ──────────────────────────────────────────────────────────────────
