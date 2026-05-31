@@ -413,6 +413,16 @@
             <input id="mirror-y" type="number" value="1.48" min="1.00" max="2.30" step="0.01" />
             <button id="room-apply">Rebuild room</button>
             <hr class="panel-divider">
+            <label>Bathtub width (m)</label>
+            <input id="tub-w" type="number" value="0.80" min="0.50" max="1.20" step="0.01" />
+            <label>Bathtub length (m)</label>
+            <input id="tub-l" type="number" value="1.70" min="1.20" max="2.00" step="0.01" />
+            <hr class="panel-divider">
+            <label>Shower width (m)</label>
+            <input id="sh-w" type="number" value="0.89" min="0.60" max="1.50" step="0.01" />
+            <label>Shower depth (m)</label>
+            <input id="sh-d" type="number" value="0.89" min="0.60" max="1.50" step="0.01" />
+            <hr class="panel-divider">
             <label>Human figure</label>
             <label class="est-check-label" style="pointer-events:auto">
                 <input type="checkbox" id="human-visible" checked> Show
@@ -485,6 +495,11 @@
     let roomSinkX   = 1.17; // sink X position (centre)
     let roomMirrorX = 1.17; // mirror wall (upper gypsum extension) X position (centre)
     let roomMirrorY = 1.48; // mirror glass Y position (centre)
+
+    let roomTubW = 0.80;  // bathtub width
+    let roomTubL = 1.70;  // bathtub length
+    let roomShW  = 0.89;  // shower width
+    let roomShD  = 0.89;  // shower depth
 
     let humanGroup   = null;
     let roomHumanH   = 1.80;
@@ -708,8 +723,8 @@
 
         const sinkX   = roomSinkX;
         const mirrorX = roomMirrorX;
-        const tubX  = W - 0.4;
-        const tubZ  = gypsumFace - 0.85;
+        const tubX  = W - roomTubW / 2;
+        const tubZ  = gypsumFace - roomTubL / 2;
         const toiZ  = gypsumFace - 0.26;
         const sinkZ = gypsumFace - 0.21;
 
@@ -796,11 +811,11 @@
         scene.add(fl); roomLights.push(fl);
 
         // ── Bathtub ────────────────────────────────────────────────────────────────
-        const tubW=0.8, tubL=1.7, tubH=0.55;
+        const tubW=roomTubW, tubL=roomTubL, tubH=0.55;
         rbox(tubW, tubH, tubL, ceramicMat, tubX, tubH/2, tubZ);
         rbox(tubW-0.1, tubH-0.08, tubL-0.1, new THREE.MeshLambertMaterial({color:0xc8e8f0,side:THREE.BackSide}), tubX, tubH/2+0.02, tubZ);
-        rbox(0.04, 0.2,  0.04, chromeMat, tubX-0.3, tubH+0.2,  tubZ+tubL/2-0.12);
-        rbox(0.12, 0.03, 0.03, chromeMat, tubX-0.3, tubH+0.37, tubZ+tubL/2-0.12);
+        rbox(0.04, 0.2,  0.04, chromeMat, tubX-tubW*0.375, tubH+0.2,  tubZ+tubL/2-0.12);
+        rbox(0.12, 0.03, 0.03, chromeMat, tubX-tubW*0.375, tubH+0.37, tubZ+tubL/2-0.12);
 
         // ── Toilet ─────────────────────────────────────────────────────────────────
         rbox(0.38, 0.38, 0.52, ceramicMat, 0.38, 0.19, toiZ);
@@ -816,7 +831,7 @@
         rbox(0.50, 0.64, 0.02, new THREE.MeshLambertMaterial({color:0x888870}), sinkX, roomMirrorY, gypsumFace-0.03);
 
         // ── Shower ─────────────────────────────────────────────────────────────────
-        const shW=0.89, shD=0.89, shH=2.0, shX=W-shW/2, shZ=shD/2;
+        const shW=roomShW, shD=roomShD, shH=2.0, shX=W-shW/2, shZ=shD/2;
         rbox(shW, shH, 0.015, glassMat, shX, shH/2, shZ+shD/2);
         rbox(0.015, shH, shD, glassMat, shX-shW/2, shH/2, shZ);
         rbox(shW-0.02, 0.06, shD-0.02, ceramicMat, shX, 0.03, shZ);
@@ -1067,15 +1082,24 @@
         const newPC = parseFloat(document.getElementById('pipe-chase').value);
         const newGW = parseFloat(document.getElementById('gypsum-width').value);
         const newSX = parseFloat(document.getElementById('sink-x').value);
-        const newMX = parseFloat(document.getElementById('mirror-x').value);
-        const newMY = parseFloat(document.getElementById('mirror-y').value);
-        if (isNaN(newL) || isNaN(newPC) || isNaN(newGW) || isNaN(newSX) || isNaN(newMX) || isNaN(newMY)) { return; }
+        const newMX  = parseFloat(document.getElementById('mirror-x').value);
+        const newMY  = parseFloat(document.getElementById('mirror-y').value);
+        const newTubW = parseFloat(document.getElementById('tub-w').value);
+        const newTubL = parseFloat(document.getElementById('tub-l').value);
+        const newShW  = parseFloat(document.getElementById('sh-w').value);
+        const newShD  = parseFloat(document.getElementById('sh-d').value);
+        if (isNaN(newL) || isNaN(newPC) || isNaN(newGW) || isNaN(newSX) || isNaN(newMX) || isNaN(newMY)
+            || isNaN(newTubW) || isNaN(newTubL) || isNaN(newShW) || isNaN(newShD)) { return; }
         roomL       = Math.max(2,    Math.min(8,      newL));
         roomPC      = Math.max(0.1,  Math.min(1.5,    newPC));
         roomGW      = Math.max(0.30, Math.min(W,      newGW));
         roomSinkX   = Math.max(0.30, Math.min(W-0.30, newSX));
         roomMirrorX = Math.max(roomGW/2, Math.min(W - roomGW/2, newMX));
-        roomMirrorY = Math.max(1.00, Math.min(2.30, newMY));
+        roomMirrorY = Math.max(1.00, Math.min(2.30,   newMY));
+        roomTubW    = Math.max(0.50, Math.min(1.20,   newTubW));
+        roomTubL    = Math.max(1.20, Math.min(2.00,   newTubL));
+        roomShW     = Math.max(0.60, Math.min(1.50,   newShW));
+        roomShD     = Math.max(0.60, Math.min(1.50,   newShD));
         buildRoom();
         updateFloorTiles(_floorTW, _floorTH);
         updateWallTiles(_wallTW, _wallTH);
@@ -1085,7 +1109,7 @@
 
     document.getElementById('room-apply').addEventListener('click', applyRoomParams);
 
-    ['room-length', 'pipe-chase', 'gypsum-width', 'sink-x', 'mirror-x', 'mirror-y'].forEach(id => {
+    ['room-length', 'pipe-chase', 'gypsum-width', 'sink-x', 'mirror-x', 'mirror-y', 'tub-w', 'tub-l', 'sh-w', 'sh-d'].forEach(id => {
         document.getElementById(id).addEventListener('input', applyRoomParams);
     });
 
