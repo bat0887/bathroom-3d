@@ -1039,6 +1039,22 @@
         rbox(0.03, 0.03, 0.5,  chromeMat, 0.06, 1.3, 1.5);
         rbox(0.02, 0.28, 0.44, new THREE.MeshLambertMaterial({color:0x4488bb,side:THREE.DoubleSide}), 0.05, 1.3, 1.5);
 
+        // ── Access hatch (люк) — between toilet and sink ──────────────────────────
+        {
+            const hatchX = (0.57 + sinkX - 0.25) / 2;  // midpoint between toilet right edge and sink left edge
+            const hatchY = 0.50;                         // 50 cm from floor — comfortably reachable
+            const hatchW = 0.20;
+            const hatchH = 0.26;
+            const hatchFrameMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
+            const hatchDoorMat  = new THREE.MeshLambertMaterial({ color: 0xe8e4de });
+            // outer frame — slightly inset into wall face
+            rbox(hatchW + 0.04, hatchH + 0.04, 0.013, hatchFrameMat, hatchX, hatchY, gypsumFace - 0.005);
+            // door panel — flush with wall face
+            rbox(hatchW, hatchH, 0.010, hatchDoorMat, hatchX, hatchY, gypsumFace + 0.002);
+            // handle bar — right side of door
+            rbox(0.012, 0.012, 0.030, chromeMat, hatchX + hatchW / 2 - 0.022, hatchY, gypsumFace + 0.016);
+        }
+
         // ── Grid ───────────────────────────────────────────────────────────────────
         const grid = new THREE.GridHelper(10, 20, 0x333355, 0x222244);
         grid.position.set(W/2, 0, L/2);
