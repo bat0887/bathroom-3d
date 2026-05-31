@@ -401,8 +401,10 @@
             <input id="pipe-chase" type="number" value="0.40" min="0.10" max="1.50" step="0.01" />
             <label>Mirror wall width (m)</label>
             <input id="gypsum-width" type="number" value="1.10" min="0.30" max="2.34" step="0.01" />
-            <label>Sink / mirror X position (m)</label>
+            <label>Sink X position (m)</label>
             <input id="sink-x" type="number" value="1.17" min="0.30" max="2.04" step="0.01" />
+            <label>Mirror wall X position (m)</label>
+            <input id="mirror-x" type="number" value="1.17" min="0.30" max="2.04" step="0.01" />
             <button id="room-apply">Rebuild room</button>
         </div>
     </div>
@@ -467,7 +469,8 @@
     let roomL  = 3.21;   // room length (Z)
     let roomPC = 0.40;   // pipe chase depth (back wall → gypsum wall)
     let roomGW = 1.10;   // gypsum upper extension width (mirror wall above sink)
-    let roomSinkX = 1.17; // sink / mirror wall X position (centre)
+    let roomSinkX   = 1.17; // sink X position (centre)
+    let roomMirrorX = 1.17; // mirror wall (upper gypsum extension) X position (centre)
 
     // ─── Tile system — resizable floor + wall tiles ───────────────────────────────
     const _tileTextures  = [];        // all textures (for image reload)
@@ -649,7 +652,8 @@
         const gypsumTopH = Math.max(0, parseFloat((ceilAtGypsum - 1.0).toFixed(3)));
         const gypsumTopY = 1.0 + gypsumTopH / 2;
 
-        const sinkX = roomSinkX;
+        const sinkX   = roomSinkX;
+        const mirrorX = roomMirrorX;
         const tubX  = W - 0.4;
         const tubZ  = gypsumFace - 0.85;
         const toiZ  = gypsumFace - 0.26;
@@ -685,7 +689,7 @@
         const gypsumMat = new THREE.MeshLambertMaterial({ color: 0xddd9d0 });
         rbox(W, 1.0, GYP, wallBoxMat(W, 1.0), W/2, 0.5, gypsumZ);
         if (gypsumTopH > 0.01) {
-            rbox(roomGW, gypsumTopH, GYP, wallBoxMat(roomGW, gypsumTopH), sinkX, gypsumTopY, gypsumZ);
+            rbox(roomGW, gypsumTopH, GYP, wallBoxMat(roomGW, gypsumTopH), mirrorX, gypsumTopY, gypsumZ);
         }
         // horizontal cap — closes the top of the pipe chase (y = 1.0)
         rbox(W, GYP, PC, gypsumMat, W/2, 1.0 + GYP / 2, L - PC / 2);
@@ -693,8 +697,8 @@
         const sideGapH = Math.max(0, H1 - 1.0);
         if (sideGapH > 0.005 && PC > 0.01) {
             const sideY = 1.0 + sideGapH / 2;
-            rbox(GYP, sideGapH, PC, gypsumMat, sinkX - roomGW / 2, sideY, L - PC / 2);
-            rbox(GYP, sideGapH, PC, gypsumMat, sinkX + roomGW / 2, sideY, L - PC / 2);
+            rbox(GYP, sideGapH, PC, gypsumMat, mirrorX - roomGW / 2, sideY, L - PC / 2);
+            rbox(GYP, sideGapH, PC, gypsumMat, mirrorX + roomGW / 2, sideY, L - PC / 2);
         }
 
         // ── Side walls ─────────────────────────────────────────────────────────────
@@ -782,7 +786,7 @@
             // gypsum wall lower — front face toward room (−z from gypsumZ)
             [W,      1.0,        W / 2,    0.5,                     gypsumZ - GYP / 2 - O, Math.PI],
             // gypsum wall upper extension
-            ...(gypsumTopH > 0.01 ? [[roomGW, gypsumTopH, sinkX, gypsumTopY, gypsumZ - GYP / 2 - O, Math.PI]] : []),
+            ...(gypsumTopH > 0.01 ? [[roomGW, gypsumTopH, mirrorX, gypsumTopY, gypsumZ - GYP / 2 - O, Math.PI]] : []),
             // back wall — full height H1
             [W,      H1,         W / 2,    H1 / 2,                  L - 0.025 - O,         Math.PI],
             // entrance wall — left piece, interior face (+z)
@@ -951,11 +955,13 @@
         const newPC = parseFloat(document.getElementById('pipe-chase').value);
         const newGW = parseFloat(document.getElementById('gypsum-width').value);
         const newSX = parseFloat(document.getElementById('sink-x').value);
-        if (isNaN(newL) || isNaN(newPC) || isNaN(newGW) || isNaN(newSX)) { return; }
-        roomL     = Math.max(2,    Math.min(8,      newL));
-        roomPC    = Math.max(0.1,  Math.min(1.5,    newPC));
-        roomGW    = Math.max(0.30, Math.min(W,      newGW));
-        roomSinkX = Math.max(0.30, Math.min(W-0.30, newSX));
+        const newMX = parseFloat(document.getElementById('mirror-x').value);
+        if (isNaN(newL) || isNaN(newPC) || isNaN(newGW) || isNaN(newSX) || isNaN(newMX)) { return; }
+        roomL       = Math.max(2,    Math.min(8,      newL));
+        roomPC      = Math.max(0.1,  Math.min(1.5,    newPC));
+        roomGW      = Math.max(0.30, Math.min(W,      newGW));
+        roomSinkX   = Math.max(0.30, Math.min(W-0.30, newSX));
+        roomMirrorX = Math.max(roomGW/2, Math.min(W - roomGW/2, newMX));
         buildRoom();
         updateFloorTiles(_floorTW, _floorTH);
         updateWallTiles(_wallTW, _wallTH);
@@ -964,7 +970,7 @@
 
     document.getElementById('room-apply').addEventListener('click', applyRoomParams);
 
-    ['room-length', 'pipe-chase', 'gypsum-width', 'sink-x'].forEach(id => {
+    ['room-length', 'pipe-chase', 'gypsum-width', 'sink-x', 'mirror-x'].forEach(id => {
         document.getElementById(id).addEventListener('input', applyRoomParams);
     });
 
