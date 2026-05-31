@@ -394,6 +394,10 @@
             <input id="tile-url" type="text" placeholder="https://example.com/tile.jpg" />
             <button id="tile-apply">Apply</button>
             <div id="tile-status"></div>
+            <label>Back wall tile image URL</label>
+            <input id="back-wall-url" type="text" placeholder="https://example.com/tile.jpg" />
+            <button id="back-wall-apply">Apply to back walls</button>
+            <div id="back-wall-status"></div>
             <hr class="panel-divider">
             <label>Room length (m)</label>
             <input id="room-length" type="number" value="3.21" min="2" max="8" step="0.01" />
@@ -487,10 +491,12 @@
     let roomHumanVis = true;
 
     // ─── Tile system — resizable floor + wall tiles ───────────────────────────────
-    const _tileTextures  = [];        // all textures (for image reload)
-    const _floorTexRefs  = [];        // { tex, sw, sh } — BoxGeometry floor faces
-    const _wallBoxRefs   = [];        // { tex, sw, sh } — BoxGeometry wall faces
-    const _wallShapeRefs = [];        // tex[]           — ShapeGeometry wall faces
+    const _tileTextures    = [];   // all side/gypsum wall textures (for image reload)
+    const _floorTexRefs    = [];   // { tex, sw, sh } — BoxGeometry floor faces
+    const _wallBoxRefs     = [];   // { tex, sw, sh } — BoxGeometry wall faces
+    const _wallShapeRefs   = [];   // tex[]           — ShapeGeometry side wall faces
+    const _backWallTextures = [];  // back wall (entrance + back wall) textures
+    const _backWallBoxRefs  = [];  // { tex, sw, sh } — back wall faces
 
     let _floorTW = 0.60, _floorTH = 1.20;  // current floor tile size (metres)
     let _wallTW  = 0.60, _wallTH  = 1.20;  // current wall  tile size (metres)
@@ -527,9 +533,12 @@
         _wallTW = wM; _wallTH = hM;
         _wallBoxRefs.forEach(({ tex, sw, sh }) => { tex.repeat.set(sw / wM, sh / hM); tex.needsUpdate = true; });
         _wallShapeRefs.forEach(tex => { tex.repeat.set(1 / wM, 1 / hM); tex.needsUpdate = true; });
+        _backWallBoxRefs.forEach(({ tex, sw, sh }) => { tex.repeat.set(sw / wM, sh / hM); tex.needsUpdate = true; });
     }
 
-    let _lastTileCanvas = null;
+    let _lastTileCanvas     = null;
+    let _lastBackWallCanvas = null;
+
     function _buildTileCanvas(img) {
         const CW = 512, CH = 1024;
         const canvas = document.createElement('canvas');
@@ -542,11 +551,39 @@
         ctx.strokeRect(g / 2, g / 2, CW - g, CH - g);
         _lastTileCanvas = canvas;
         _tileTextures.forEach(t => { t.image = canvas; t.needsUpdate = true; });
+        if (!_lastBackWallCanvas) {
+            _backWallTextures.forEach(t => { t.image = canvas; t.needsUpdate = true; });
+        }
     }
     new THREE.ImageLoader().load('./6836051_1.webp', _buildTileCanvas);
 
+    function _buildBackWallCanvas(img) {
+        const CW = 512, CH = 1024;
+        const canvas = document.createElement('canvas');
+        canvas.width = CW; canvas.height = CH;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, CW, CH);
+        const g = 2;
+        ctx.strokeStyle = '#f2f0ed';
+        ctx.lineWidth = g;
+        ctx.strokeRect(g / 2, g / 2, CW - g, CH - g);
+        _lastBackWallCanvas = canvas;
+        _backWallTextures.forEach(t => { t.image = canvas; t.needsUpdate = true; });
+    }
+
+    function makeBackWallBoxTex(sw, sh) {
+        const t = new THREE.Texture();
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.repeat.set(sw / _wallTW, sh / _wallTH);
+        _backWallTextures.push(t);
+        _backWallBoxRefs.push({ tex: t, sw, sh });
+        return t;
+    }
     function wallBoxMat(sw, sh, opts = {}) {
         return new THREE.MeshLambertMaterial({ map: makeWallBoxTex(sw, sh), ...opts });
+    }
+    function backWallBoxMat(sw, sh, opts = {}) {
+        return new THREE.MeshLambertMaterial({ map: makeBackWallBoxTex(sw, sh), ...opts });
     }
 
     // ─── Materials ───────────────────────────────────────────────────────────────
@@ -586,6 +623,9 @@
         _wallShapeRefs.length = 0;
         _tileTextures.forEach(t => t.dispose());
         _tileTextures.length = 0;
+        _backWallBoxRefs.length = 0;
+        _backWallTextures.forEach(t => t.dispose());
+        _backWallTextures.length = 0;
         _disposeMeshArr(_aquaMeshes);
         _disposeMeshArr(_rigipsMeshes);
     }
@@ -697,7 +737,7 @@
         if (backPlainH > 0.01) {
             rbox(W, backPlainH, 0.05, new THREE.MeshLambertMaterial({ color: 0xd4c9b8 }), W/2, backPlainH / 2, L);
         }
-        rbox(W, backTileH, 0.05, wallBoxMat(W, backTileH), W/2, H1 - backTileH / 2, L);
+        rbox(W, backTileH, 0.05, backWallBoxMat(W, backTileH), W/2, H1 - backTileH / 2, L);
 
         // ── Gypsum board wall ──────────────────────────────────────────────────────
         const gypsumMat = new THREE.MeshLambertMaterial({ color: 0xddd9d0 });
@@ -739,9 +779,9 @@
         // ── Front wall ─────────────────────────────────────────────────────────────
         const leftW = doorX - doorW/2, rightW = W - (doorX + doorW/2), topH = H0 - doorH;
         const fT = 0.05;
-        if (leftW  > 0) rbox(leftW,  H0,  fT, wallBoxMat(leftW,  H0),  leftW/2,        H0/2,         0);
-        if (rightW > 0) rbox(rightW, H0,  fT, wallBoxMat(rightW, H0),  W-rightW/2,     H0/2,         0);
-        if (topH   > 0) rbox(doorW,  topH, fT, wallBoxMat(doorW, topH), doorX,          doorH+topH/2, 0);
+        if (leftW  > 0) rbox(leftW,  H0,  fT, backWallBoxMat(leftW,  H0),  leftW/2,        H0/2,         0);
+        if (rightW > 0) rbox(rightW, H0,  fT, backWallBoxMat(rightW, H0),  W-rightW/2,     H0/2,         0);
+        if (topH   > 0) rbox(doorW,  topH, fT, backWallBoxMat(doorW, topH), doorX,          doorH+topH/2, 0);
         rbox(fT, doorH+fT, fT, doorFrameMat, doorX-doorW/2, doorH/2, 0);
         rbox(fT, doorH+fT, fT, doorFrameMat, doorX+doorW/2, doorH/2, 0);
         rbox(doorW+fT*2, fT, fT, doorFrameMat, doorX, doorH, 0);
@@ -826,6 +866,10 @@
         // apply tile image if already loaded
         if (_lastTileCanvas) {
             _tileTextures.forEach(t => { t.image = _lastTileCanvas; t.needsUpdate = true; });
+        }
+        const bwCanvas = _lastBackWallCanvas ?? _lastTileCanvas;
+        if (bwCanvas) {
+            _backWallTextures.forEach(t => { t.image = bwCanvas; t.needsUpdate = true; });
         }
     }
 
@@ -982,6 +1026,26 @@
     });
     document.getElementById('tile-url').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') document.getElementById('tile-apply').click();
+    });
+
+    function applyBackWallUrl(url) {
+        const status = document.getElementById('back-wall-status');
+        status.style.color = '#aaa';
+        status.textContent = 'Loading…';
+        const loader = new THREE.ImageLoader();
+        loader.setCrossOrigin('anonymous');
+        loader.load(url,
+            (img) => { _buildBackWallCanvas(img); status.style.color = '#7ecfff'; status.textContent = 'Applied ✓'; },
+            undefined,
+            () => { status.style.color = '#ff7070'; status.textContent = 'Error: could not load image'; }
+        );
+    }
+    document.getElementById('back-wall-apply').addEventListener('click', () => {
+        const url = document.getElementById('back-wall-url').value.trim();
+        if (url) applyBackWallUrl(url);
+    });
+    document.getElementById('back-wall-url').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('back-wall-apply').click();
     });
 
     function parseTileValue(val) {
