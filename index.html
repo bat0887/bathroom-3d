@@ -523,7 +523,7 @@
         _lastTileCanvas = canvas;
         _tileTextures.forEach(t => { t.image = canvas; t.needsUpdate = true; });
     }
-    new THREE.ImageLoader().load('/6836051_1.webp', _buildTileCanvas);
+    new THREE.ImageLoader().load('./6836051_1.webp', _buildTileCanvas);
 
     function wallBoxMat(sw, sh, opts = {}) {
         return new THREE.MeshLambertMaterial({ map: makeWallBoxTex(sw, sh), ...opts });
