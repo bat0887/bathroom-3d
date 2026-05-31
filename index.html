@@ -1216,7 +1216,14 @@
         const name = document.getElementById('preset-name').value.trim();
         const status = document.getElementById('preset-status');
         if (!name) { status.style.color = '#ff7070'; status.textContent = 'Enter a name'; return; }
-        savePreset(name, collectValues());
+        const values = collectValues();
+        savePreset(name, values);
+        const blob = new Blob([JSON.stringify({ name, values }, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${name.replace(/\s+/g, '_')}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
         document.getElementById('preset-name').value = '';
         status.style.color = '#7ecfff'; status.textContent = `Saved: ${name}`;
     });
