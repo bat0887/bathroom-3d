@@ -765,6 +765,21 @@
         rbox(0.48, 0.62, 0.03, glassMat,  sinkX, roomMirrorY, gypsumFace-0.02);
         rbox(0.50, 0.64, 0.02, new THREE.MeshLambertMaterial({color:0x888870}), sinkX, roomMirrorY, gypsumFace-0.03);
 
+        // ── Human figure (1.8 m scale reference, near sink) ───────────────────────
+        const humanMat = new THREE.MeshLambertMaterial({ color: 0xc8b4a0 });
+        const hX = sinkX;
+        const hZ = sinkZ - 0.45;
+        const headM = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 8), humanMat);
+        headM.position.set(hX, 1.69, hZ);
+        headM.castShadow = true;
+        scene.add(headM); roomMeshes.push(headM);
+        rbox(0.40, 0.58, 0.22, humanMat, hX,        1.270, hZ); // torso
+        rbox(0.36, 0.16, 0.22, humanMat, hX,        0.875, hZ); // hips
+        rbox(0.09, 0.55, 0.09, humanMat, hX - 0.25, 1.220, hZ); // left arm
+        rbox(0.09, 0.55, 0.09, humanMat, hX + 0.25, 1.220, hZ); // right arm
+        rbox(0.14, 0.80, 0.16, humanMat, hX - 0.10, 0.400, hZ); // left leg
+        rbox(0.14, 0.80, 0.16, humanMat, hX + 0.10, 0.400, hZ); // right leg
+
         // ── Shower ─────────────────────────────────────────────────────────────────
         const shW=0.89, shD=0.89, shH=2.0, shX=W-shW/2, shZ=shD/2;
         rbox(shW, shH, 0.015, glassMat, shX, shH/2, shZ+shD/2);
