@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toilet Room 3D Model</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; overflow: hidden; font-family: Arial, sans-serif; }
+        canvas { display: block; }
+
+        #left-column {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        #info {
+            color: #e0e0e0;
+            background: rgba(0,0,0,0.55);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        #info h3 { margin-bottom: 6px; font-size: 15px; color: #7ecfff; }
+        #estimate-panel {
+            color: #e0e0e0;
+            background: rgba(0,0,0,0.55);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 12px;
+            line-height: 1.6;
+            min-width: 200px;
+            pointer-events: auto;
+        }
+        #estimate-panel h3 { margin-bottom: 8px; font-size: 14px; color: #7ecfff; }
+        .est-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 6px;
+            align-items: baseline;
+        }
+        .est-label { color: #aaa; }
+        .est-value { color: #fff; font-weight: bold; text-align: right; }
+        .est-unit  { color: #666; font-size: 11px; }
+        .est-divider { border: none; border-top: 1px solid #333; margin: 6px 0; }
+        .est-note { font-size: 10px; color: #666; margin-top: 4px; }
+        .est-section { color: #7ecfff; font-size: 11px; font-weight: bold; margin-top: 2px; }
+        .est-price { color: #90ee90; }
+        .est-total-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 6px;
+            align-items: baseline;
+            border-top: 1px solid #555;
+            margin-top: 4px;
+            padding-top: 4px;
+        }
+        .est-total-label { color: #fff; font-weight: bold; font-size: 12px; }
+        .est-total-value { color: #ffd700; font-weight: bold; font-size: 13px; text-align: right; }
+        .est-total-unit  { color: #aaa; font-size: 11px; }
+        .est-check-label {
+            display: flex; align-items: center; gap: 5px;
+            cursor: pointer; font-size: 11px; font-weight: bold; color: #7ecfff;
+        }
+        .est-check-label input[type="checkbox"] {
+            width: 13px; height: 13px; cursor: pointer; accent-color: #7ecfff; flex-shrink: 0;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #aaa;
+            font-size: 12px;
+            background: rgba(0,0,0,0.45);
+            padding: 8px 16px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        #tile-panel {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(0,0,0,0.55);
+            padding: 12px 14px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 300px;
+            pointer-events: auto;
+        }
+        #tile-panel label {
+            color: #7ecfff;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        #tile-panel select {
+            width: 100%;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+        #tile-panel select:focus { border-color: #7ecfff; }
+        #tile-url {
+            width: 100%;
+            padding: 7px 10px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            font-size: 12px;
+            outline: none;
+        }
+        #tile-url:focus { border-color: #7ecfff; }
+        #tile-apply {
+            padding: 7px 5px;
+            border-radius: 6px;
+            border: none;
+            background: #7ecfff;
+            color: #1a1a2e;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.15s;
+            margin-top: 10px;
+        }
+        #tile-apply:hover { background: #a8dfff; }
+        #tile-status {
+            font-size: 11px;
+            color: #aaa;
+            min-height: 14px;
+        }
+        .panel-divider {
+            border: none;
+            border-top: 1px solid #333;
+            margin: 2px 0;
+        }
+        #tile-panel input[type="number"] {
+            width: 100%;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            font-size: 12px;
+            outline: none;
+        }
+        #tile-panel input[type="number"]:focus { border-color: #7ecfff; }
+        #room-apply {
+            padding: 7px 5px;
+            border-radius: 6px;
+            border: none;
+            background: #7ecfff;
+            color: #1a1a2e;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.15s;
+            margin-top: 10px;
+        }
+        #room-apply:hover { background: #a8dfff; }
+
+        /* ── Panel collapse ─────────────────────────────────────────── */
+        .panel-hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            pointer-events: auto;
+        }
+        .panel-hdr h3 { margin-bottom: 0; }
+        .panel-title { color: #7ecfff; font-size: 14px; font-weight: bold; }
+        .panel-arrow {
+            font-size: 12px; color: #7ecfff;
+            display: inline-block;
+            transition: transform 0.2s;
+            margin-left: 8px; flex-shrink: 0;
+        }
+        .panel.collapsed .panel-arrow { transform: rotate(-90deg); }
+        .panel.collapsed .panel-body { display: none; }
+        .panel-body { margin-top: 8px; }
+        #info .panel-body { margin-top: 4px; font-size: 13px; line-height: 1.7; }
+
+        /* ── ui-wrap ─────────────────────────────────────────────────── */
+        #ui-wrap {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+        }
+
+        /* ── Mobile layout ───────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            #ui-wrap {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                padding: 8px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                scrollbar-width: thin;
+                scrollbar-color: #444 transparent;
+            }
+            #left-column {
+                position: relative !important;
+                top: auto !important; left: auto !important;
+                width: 100% !important;
+                pointer-events: auto;
+            }
+            #tile-panel {
+                position: relative !important;
+                top: auto !important; right: auto !important;
+                width: 100% !important;
+                pointer-events: auto;
+            }
+            #controls { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="ui-wrap">
+<div id="left-column">
+<div id="info" class="panel">
+    <div class="panel-hdr">
+        <h3>Toilet Room</h3>
+        <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+        Width: 1.72 m<br>
+        Length: 0.94 m<br>
+        Height: 2.64 m<br>
+        Ceiling: flat<br>
+        Front wall: solid
+    </div>
+</div>
+<div id="estimate-panel" class="panel">
+    <div class="panel-hdr">
+        <h3>Tile Estimate</h3>
+        <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+    <div class="est-section">Підлогова плитка</div>
+    <div class="est-row">
+        <span class="est-label">Площа</span>
+        <span class="est-value" id="est-floor-area">—</span>
+        <span class="est-unit">m²</span>
+    </div>
+    <div class="est-row">
+        <span class="est-label">Кількість</span>
+        <span class="est-value" id="est-floor-tiles">—</span>
+        <span class="est-unit">шт</span>
+    </div>
+    <div class="est-row" id="est-floor-cost-row">
+        <span class="est-label">Вартість</span>
+        <span class="est-value est-price" id="est-floor-cost">—</span>
+        <span class="est-unit">₴</span>
+    </div>
+    <hr class="est-divider">
+    <div class="est-section">Настінна плитка</div>
+    <div class="est-row">
+        <span class="est-label">Площа</span>
+        <span class="est-value" id="est-wall-area">—</span>
+        <span class="est-unit">m²</span>
+    </div>
+    <div class="est-row">
+        <span class="est-label">Кількість</span>
+        <span class="est-value" id="est-wall-tiles">—</span>
+        <span class="est-unit">шт</span>
+    </div>
+    <div class="est-row" id="est-wall-cost-row">
+        <span class="est-label">Вартість</span>
+        <span class="est-value est-price" id="est-wall-cost">—</span>
+        <span class="est-unit">₴</span>
+    </div>
+    <hr class="est-divider">
+    <label class="est-check-label">
+        <input type="checkbox" id="show-aqua">
+        Aquapanel Indoor 2400×900 (Knauf) · 2 198 ₴
+    </label>
+    <div class="est-row">
+        <span class="est-label">Всі стіни</span>
+        <span class="est-value" id="est-aqua-all">—</span>
+        <span class="est-unit">шт</span>
+    </div>
+    <div class="est-row">
+        <span class="est-label"></span>
+        <span class="est-value est-price" id="est-aqua-all-price">—</span>
+        <span class="est-unit">₴</span>
+    </div>
+    <div class="est-row">
+        <span class="est-label">Мокра зона ⁽¹⁾</span>
+        <span class="est-value" id="est-aqua-wet">—</span>
+        <span class="est-unit">шт</span>
+    </div>
+    <div class="est-row">
+        <span class="est-label"></span>
+        <span class="est-value est-price" id="est-aqua-wet-price">—</span>
+        <span class="est-unit">₴</span>
+    </div>
+    <hr class="est-divider">
+    <label class="est-check-label">
+        <input type="checkbox" id="show-rigips">
+        Rigips PRO Hydro 2500×1200 · 499 ₴
+    </label>
+    <div class="est-row">
+        <span class="est-label">Всі стіни</span>
+        <span class="est-value" id="est-rigips-all">—</span>
+        <span class="est-unit">шт</span>
+    </div>
+    <div class="est-row">
+        <span class="est-label"></span>
+        <span class="est-value est-price" id="est-rigips-all-price">—</span>
+        <span class="est-unit">₴</span>
+    </div>
+    <div class="est-row">
+        <span class="est-label">Суха зона ⁽²⁾</span>
+        <span class="est-value" id="est-rigips-wet">—</span>
+        <span class="est-unit">шт</span>
+    </div>
+    <div class="est-row">
+        <span class="est-label"></span>
+        <span class="est-value est-price" id="est-rigips-wet-price">—</span>
+        <span class="est-unit">₴</span>
+    </div>
+    <hr class="est-divider">
+    <div class="est-total-row">
+        <span class="est-total-label">Плитка разом</span>
+        <span class="est-total-value" id="est-tiles-total">—</span>
+        <span class="est-total-unit">₴</span>
+    </div>
+    <div class="est-note">+10% запас включено</div>
+    <div class="est-note">⁽¹⁾ Мокра зона: лицева панель + задня стінка</div>
+    <div class="est-note">⁽²⁾ Суха зона: всі стіни − мокра зона</div>
+    </div>
+</div>
+</div>
+
+<div id="tile-panel" class="panel">
+    <div class="panel-hdr">
+        <span class="panel-title">Tile & Room Settings</span>
+        <span class="panel-arrow">▾</span>
+    </div>
+    <div class="panel-body">
+    <label>Floor tile size</label>
+    <select id="floor-size">
+        <option value="0.60,1.20" selected>60 × 120 cm</option>
+        <option value="0.60,0.60">60 × 60 cm</option>
+        <option value="0.80,0.80">80 × 80 cm</option>
+        <option value="1.20,1.20">120 × 120 cm</option>
+        <option value="0.20,1.20">20 × 120 cm</option>
+        <option value="0.15,0.90">15 × 90 cm</option>
+        <option value="0.075,0.15">7.5 × 15 cm</option>
+        <option value="0.05,0.25">5 × 25 cm</option>
+        <option value="0.10,0.30">10 × 30 cm</option>
+        <option value="0.10,0.10">10 × 10 cm</option>
+        <option value="0.15,0.15">15 × 15 cm</option>
+    </select>
+    <label>Ціна підлогової плитки (₴/м²)</label>
+    <input id="floor-tile-price" type="number" value="" min="0" step="50" placeholder="₴ за м²" />
+    <label>Wall tile size</label>
+    <select id="wall-size">
+        <option value="0.60,1.20" selected>60 × 120 cm</option>
+        <option value="0.60,0.60">60 × 60 cm</option>
+        <option value="0.80,0.80">80 × 80 cm</option>
+        <option value="1.20,1.20">120 × 120 cm</option>
+        <option value="0.20,1.20">20 × 120 cm</option>
+        <option value="0.15,0.90">15 × 90 cm</option>
+        <option value="0.075,0.15">7.5 × 15 cm</option>
+        <option value="0.05,0.25">5 × 25 cm</option>
+        <option value="0.10,0.30">10 × 30 cm</option>
+        <option value="0.10,0.10">10 × 10 cm</option>
+        <option value="0.15,0.15">15 × 15 cm</option>
+    </select>
+    <label>Ціна настінної плитки (₴/м²)</label>
+    <input id="wall-tile-price" type="number" value="" min="0" step="50" placeholder="₴ за м²" />
+    <label>Tile image URL</label>
+    <input id="tile-url" type="text" placeholder="https://example.com/tile.jpg" />
+    <button id="tile-apply">Apply</button>
+    <div id="tile-status"></div>
+    <hr class="panel-divider">
+    <label>Room length (m)</label>
+    <input id="room-length" type="number" value="0.94" min="0.50" max="4.00" step="0.01" />
+    <button id="room-apply">Rebuild room</button>
+    </div>
+</div>
+</div>
+
+<div id="controls">Mouse: rotate · Scroll: zoom · Right-click drag: pan</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ─── Scene setup ────────────────────────────────────────────────────────────
+const scene    = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a2e);
+scene.fog = new THREE.Fog(0x1a1a2e, 8, 18);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(3.0, 2.5, 3.5);
+camera.lookAt(0.86, 1.0, 0.47);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping  = true;
+controls.dampingFactor  = 0.06;
+controls.target.set(0.86, 1.0, 0.47);
+controls.minDistance    = 0.5;
+controls.maxDistance    = 10;
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ─── Dimensions ─────────────────────────────────────────────────────────────
+const W     = 1.72;  // width  (X)
+const H0    = 2.64;  // full height (entrance + flat section)
+const H1    = 1.4;   // height at back wall (only relevant when L > flatZ)
+const flatZ = 1.5;   // flat ceiling section: z=0..flatZ; slope: z=flatZ..L
+
+// ─── Dynamic room params ─────────────────────────────────────────────────────
+let roomL = 0.94;  // room length (Z)
+
+// ─── Tile system — resizable floor + wall tiles ───────────────────────────────
+const _tileTextures  = [];
+const _floorTexRefs  = [];
+const _wallBoxRefs   = [];
+const _wallShapeRefs = [];
+
+let _floorTW = 0.60, _floorTH = 1.20;
+let _wallTW  = 0.60, _wallTH  = 1.20;
+
+function _newTex(repX, repY) {
+    const t = new THREE.Texture();
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(repX, repY);
+    _tileTextures.push(t);
+    return t;
+}
+function makeFloorTex(sw, sh) {
+    const t = _newTex(sw / _floorTW, sh / _floorTH);
+    _floorTexRefs.push({ tex: t, sw, sh });
+    return t;
+}
+function makeWallBoxTex(sw, sh) {
+    const t = _newTex(sw / _wallTW, sh / _wallTH);
+    _wallBoxRefs.push({ tex: t, sw, sh });
+    return t;
+}
+function makeWallShapeTex() {
+    const t = _newTex(1 / _wallTW, 1 / _wallTH);
+    _wallShapeRefs.push(t);
+    return t;
+}
+
+function updateFloorTiles(wM, hM) {
+    _floorTW = wM; _floorTH = hM;
+    _floorTexRefs.forEach(({ tex, sw, sh }) => { tex.repeat.set(sw / wM, sh / hM); tex.needsUpdate = true; });
+}
+function updateWallTiles(wM, hM) {
+    _wallTW = wM; _wallTH = hM;
+    _wallBoxRefs.forEach(({ tex, sw, sh }) => { tex.repeat.set(sw / wM, sh / hM); tex.needsUpdate = true; });
+    _wallShapeRefs.forEach(tex => { tex.repeat.set(1 / wM, 1 / hM); tex.needsUpdate = true; });
+}
+
+let _lastTileCanvas = null;
+function _buildTileCanvas(img) {
+    const CW = 512, CH = 1024;
+    const canvas = document.createElement('canvas');
+    canvas.width = CW; canvas.height = CH;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, CW, CH);
+    const g = 2;
+    ctx.strokeStyle = '#f2f0ed';
+    ctx.lineWidth = g;
+    ctx.strokeRect(g / 2, g / 2, CW - g, CH - g);
+    _lastTileCanvas = canvas;
+    _tileTextures.forEach(t => { t.image = canvas; t.needsUpdate = true; });
+}
+new THREE.ImageLoader().load('/6836051_1.webp', _buildTileCanvas);
+
+function wallBoxMat(sw, sh, opts = {}) {
+    return new THREE.MeshLambertMaterial({ map: makeWallBoxTex(sw, sh), ...opts });
+}
+
+// ─── Materials ───────────────────────────────────────────────────────────────
+const wallMat   = new THREE.MeshLambertMaterial({ color: 0xd4c9b8, side: THREE.BackSide });
+const ceilMat  = new THREE.MeshLambertMaterial({ color: 0xf0ece4 });
+const doorMat  = new THREE.MeshLambertMaterial({ color: 0x8b6914 });
+const doorFrameMat = new THREE.MeshLambertMaterial({ color: 0x6b4f10 });
+const glassMat = new THREE.MeshLambertMaterial({ color: 0x88ccee, transparent: true, opacity: 0.35 });
+const chromeMat= new THREE.MeshLambertMaterial({ color: 0xcccccc });
+const whiteMat = new THREE.MeshLambertMaterial({ color: 0xfafafa });
+const ceramicMat= new THREE.MeshLambertMaterial({ color: 0xf0f0ef });
+
+// ─── Room mesh / light tracking ──────────────────────────────────────────────
+const roomMeshes = [];
+const roomLights = [];
+const _aquaMeshes   = [];
+const _rigipsMeshes = [];
+
+function _disposeMeshArr(arr) {
+    arr.forEach(m => {
+        scene.remove(m);
+        m.geometry.dispose();
+        if (m.material.map) { m.material.map.dispose(); }
+        m.material.dispose();
+    });
+    arr.length = 0;
+}
+
+function clearRoom() {
+    roomMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); });
+    roomMeshes.length = 0;
+    roomLights.forEach(l => scene.remove(l));
+    roomLights.length = 0;
+    _floorTexRefs.length = 0;
+    _wallBoxRefs.length = 0;
+    _wallShapeRefs.length = 0;
+    _tileTextures.forEach(t => t.dispose());
+    _tileTextures.length = 0;
+    _disposeMeshArr(_aquaMeshes);
+    _disposeMeshArr(_rigipsMeshes);
+}
+
+// ─── Board overlay helpers ────────────────────────────────────────────────────
+function _makeBoardCanvas(surfW, surfH, sheetW, sheetH) {
+    const PX = 120;
+    const cw = Math.ceil(surfW * PX), ch = Math.ceil(surfH * PX);
+    const canvas = document.createElement('canvas');
+    canvas.width = cw; canvas.height = ch;
+    const ctx = canvas.getContext('2d');
+    const cols = Math.ceil(surfW / sheetW);
+    const rows = Math.ceil(surfH / sheetH);
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const x = Math.round(c * sheetW * PX);
+            const y = Math.round(r * sheetH * PX);
+            const w = Math.min(Math.round(sheetW * PX), cw - x);
+            const h = Math.min(Math.round(sheetH * PX), ch - y);
+            const isCut = w < Math.round(sheetW * PX) * 0.98 || h < Math.round(sheetH * PX) * 0.98;
+            ctx.fillStyle = isCut ? 'rgba(140,210,60,0.82)' : 'rgba(40,180,80,0.82)';
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
+        }
+    }
+    return canvas;
+}
+
+function _addBoardSurface(arr, surfW, surfH, sheetW, sheetH, cx, cy, cz, rotY) {
+    const tex = new THREE.CanvasTexture(_makeBoardCanvas(surfW, surfH, sheetW, sheetH));
+    const mat = new THREE.MeshBasicMaterial({
+        map: tex, transparent: true, opacity: 0.92,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+    });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(surfW, surfH), mat);
+    m.renderOrder = 1;
+    m.position.set(cx, cy, cz);
+    if (rotY) { m.rotation.y = rotY; }
+    m.visible = false;
+    scene.add(m);
+    arr.push(m);
+}
+
+function buildRoom() {
+    clearRoom();
+
+    const L  = roomL;
+    const flatCeiling = L <= flatZ;
+
+    function rbox(w, h, d, mat, x, y, z) {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+        m.position.set(x, y, z);
+        m.castShadow = m.receiveShadow = true;
+        scene.add(m);
+        roomMeshes.push(m);
+        return m;
+    }
+    function rplane(mesh) { scene.add(mesh); roomMeshes.push(mesh); return mesh; }
+
+    const wallFrontMat = new THREE.MeshLambertMaterial({ map: makeWallShapeTex(), side: THREE.DoubleSide });
+    const floorMatB    = new THREE.MeshLambertMaterial({ map: makeFloorTex(W, L) });
+
+    // toilet: center of left wall
+    const toiZ   = L / 2;
+    // door on back wall shifted 20 cm right
+    const bDoorX = W / 2 + 0.20;
+    // sink on front wall: door axis + 20 cm further right
+    const sinkX  = bDoorX + 0.20;
+
+    // ── Floor ──────────────────────────────────────────────────────────────────
+    rbox(W, 0.05, L, floorMatB, W/2, 0.025, L/2);
+
+    // ── Ceiling ────────────────────────────────────────────────────────────────
+    if (flatCeiling) {
+        const cf = new THREE.Mesh(new THREE.PlaneGeometry(W, L), ceilMat);
+        cf.rotation.x = -Math.PI / 2;
+        cf.position.set(W/2, H0, L/2);
+        cf.receiveShadow = true;
+        rplane(cf);
+    } else {
+        const cf = new THREE.Mesh(new THREE.PlaneGeometry(W, flatZ), ceilMat);
+        cf.rotation.x = -Math.PI / 2;
+        cf.position.set(W/2, H0, flatZ / 2);
+        cf.receiveShadow = true;
+        rplane(cf);
+
+        const sZ = L - flatZ, sH = H0 - H1;
+        const sA = Math.atan2(sH, sZ);
+        const cs = new THREE.Mesh(new THREE.PlaneGeometry(W, Math.sqrt(sZ*sZ + sH*sH)), ceilMat);
+        cs.rotation.x = Math.PI / 2 + sA;
+        cs.position.set(W/2, (H0+H1)/2, flatZ + sZ/2);
+        cs.receiveShadow = true;
+        rplane(cs);
+    }
+
+    // ── Side walls ─────────────────────────────────────────────────────────────
+    function buildSlopedWall(xPos, flipNormal, reversed) {
+        const shape = new THREE.Shape();
+        if (flatCeiling) {
+            shape.moveTo(0, 0); shape.lineTo(L, 0);
+            shape.lineTo(L, H0); shape.lineTo(0, H0);
+        } else if (reversed) {
+            const kink = L - flatZ;
+            shape.moveTo(0,    0); shape.lineTo(L,    0);
+            shape.lineTo(L,    H0); shape.lineTo(kink, H0); shape.lineTo(0, H1);
+        } else {
+            shape.moveTo(0, 0); shape.lineTo(L, 0);
+            shape.lineTo(L, H1); shape.lineTo(flatZ, H0); shape.lineTo(0, H0);
+        }
+        shape.lineTo(0, 0);
+        const m = new THREE.Mesh(new THREE.ShapeGeometry(shape), wallFrontMat);
+        m.rotation.y = flipNormal ? -Math.PI / 2 : Math.PI / 2;
+        m.position.set(xPos, 0, flipNormal ? 0 : L);
+        m.castShadow = m.receiveShadow = true;
+        scene.add(m); roomMeshes.push(m);
+    }
+    buildSlopedWall(0, false, true);
+    buildSlopedWall(W, true,  false);
+
+    // ── Front wall — solid ─────────────────────────────────────────────────────
+    rbox(W, H0, 0.05, wallBoxMat(W, H0), W/2, H0/2, 0);
+
+    // ── Lights ─────────────────────────────────────────────────────────────────
+    const al = new THREE.AmbientLight(0xffffff, 0.75); scene.add(al); roomLights.push(al);
+    const fl = new THREE.DirectionalLight(0xfff8f0, 0.6); fl.position.set(-3, 5, 3);
+    scene.add(fl); roomLights.push(fl);
+
+    // ── Toilet — tank against left wall (x=0), bowl extends right ──────────────
+    rbox(0.52, 0.38, 0.38, ceramicMat, 0.26, 0.19, toiZ);   // bowl
+    rbox(0.18, 0.32, 0.34, ceramicMat, 0.09, 0.57, toiZ);   // tank flush x=0
+    rbox(0.50, 0.04, 0.36, ceramicMat, 0.26, 0.40, toiZ);   // seat
+
+    // ── Sink — front wall (z=0), centered on door axis (x=bDoorX) ────────────
+    rbox(0.50, 0.78, 0.42, new THREE.MeshLambertMaterial({color:0xdfd0b8}), sinkX, 0.39, 0.21);
+    rbox(0.44, 0.10, 0.36, ceramicMat, sinkX, 0.82, 0.21);
+    rbox(0.04, 0.12, 0.04, chromeMat,  sinkX, 0.94, 0.09);
+    rbox(0.14, 0.03, 0.04, chromeMat,  sinkX, 1.02, 0.09);
+    rbox(0.48, 0.62, 0.03, glassMat,   sinkX, 1.48, 0.02);
+    rbox(0.50, 0.64, 0.02, new THREE.MeshLambertMaterial({color:0x888870}), sinkX, 1.48, 0.03);
+
+    // ── Back wall with door (at z=L) ───────────────────────────────────────────
+    const bDoorW = 0.8, bDoorH = 2.05;
+    const bLeftW = bDoorX - bDoorW / 2;
+    const bRightW = W - (bDoorX + bDoorW / 2);
+    const bTopH = H0 - bDoorH;
+    const bfT = 0.05;
+    if (bLeftW  > 0) rbox(bLeftW,  H0,    bfT, wallBoxMat(bLeftW, H0),    bLeftW / 2,      H0 / 2,          L);
+    if (bRightW > 0) rbox(bRightW, H0,    bfT, wallBoxMat(bRightW, H0),   W-bRightW / 2,   H0 / 2,          L);
+    if (bTopH   > 0) rbox(bDoorW,  bTopH, bfT, wallBoxMat(bDoorW, bTopH), bDoorX,          bDoorH+bTopH/2,  L);
+    rbox(bfT, bDoorH+bfT, bfT, doorFrameMat, bDoorX-bDoorW/2, bDoorH/2, L);
+    rbox(bfT, bDoorH+bfT, bfT, doorFrameMat, bDoorX+bDoorW/2, bDoorH/2, L);
+    rbox(bDoorW+bfT*2, bfT, bfT, doorFrameMat, bDoorX, bDoorH, L);
+    const bdl = rbox(bDoorW-0.06, bDoorH-0.06, 0.04, doorMat, 0, bDoorH/2, 0);
+    bdl.position.x = bDoorX - bDoorW/2 + (bDoorW-0.06)/2;
+    bdl.rotation.y = Math.PI / 5;
+    bdl.position.z = L - 0.02;
+    rbox(0.04, 0.04, 0.12, chromeMat, bDoorX-bDoorW/2+0.15, bDoorH*0.45, L-0.08);
+
+    // ── Grid ───────────────────────────────────────────────────────────────────
+    const grid = new THREE.GridHelper(6, 12, 0x333355, 0x222244);
+    grid.position.set(W/2, 0, L/2);
+    scene.add(grid); roomMeshes.push(grid);
+
+    // ── Board overlays ──────────────────────────────────────────────────────────
+    const O = 0.012;
+    const boardSurfaces = [
+        // front wall — solid
+        [W, H0, W/2, H0/2, 0.025 + O, 0],
+        // back wall — left piece, interior face
+        ...(bLeftW  > 0 ? [[bLeftW,  H0,    bLeftW/2,       H0/2,           L - 0.025 - O, Math.PI]] : []),
+        // back wall — right piece
+        ...(bRightW > 0 ? [[bRightW, H0,    W-bRightW/2,    H0/2,           L - 0.025 - O, Math.PI]] : []),
+        // back wall — top above door
+        ...(bTopH   > 0 ? [[bDoorW,  bTopH, bDoorX,         bDoorH+bTopH/2, L - 0.025 - O, Math.PI]] : []),
+        // left side wall
+        [L, H0, O,     H0/2, L/2, -Math.PI/2],
+        // right side wall
+        [L, H0, W - O, H0/2, L/2,  Math.PI/2],
+    ];
+    boardSurfaces.forEach(([sw, sh, cx, cy, cz, ry]) => {
+        _addBoardSurface(_aquaMeshes,   sw, sh, 2.4, 0.9, cx, cy, cz, ry);
+        _addBoardSurface(_rigipsMeshes, sw, sh, 2.5, 1.2, cx, cy, cz, ry);
+    });
+    const showAqua   = document.getElementById('show-aqua')?.checked ?? false;
+    const showRigips = document.getElementById('show-rigips')?.checked ?? false;
+    _aquaMeshes.forEach(m => m.visible = showAqua);
+    _rigipsMeshes.forEach(m => m.visible = showRigips);
+
+    if (_lastTileCanvas) {
+        _tileTextures.forEach(t => { t.image = _lastTileCanvas; t.needsUpdate = true; });
+    }
+}
+
+buildRoom();
+
+// ─── Tile estimate ────────────────────────────────────────────────────────────
+function updateEstimate() {
+    const L  = roomL;
+    const flatCeiling = L <= flatZ;
+
+    const floorArea = W * L;
+
+    // two side walls — rectangle when flat ceiling, trapezoid otherwise
+    const sideWallArea = flatCeiling
+        ? L * H0
+        : flatZ * H0 + (L - flatZ) * (H0 + H1) / 2;
+
+    // front wall — solid
+    const frontWallArea = W * H0;
+
+    // back wall — with 0.8×2.05 m door
+    const backWallArea = W * H0 - 0.8 * 2.05;
+
+    const totalWallArea = 2 * sideWallArea + frontWallArea + backWallArea;
+
+    const waste = 1.10;
+    const floorTileArea = _floorTW * _floorTH;
+    const wallTileArea  = _wallTW  * _wallTH;
+
+    const floorTiles = Math.ceil(floorArea     * waste / floorTileArea);
+    const wallTiles  = Math.ceil(totalWallArea * waste / wallTileArea);
+
+    document.getElementById('est-floor-area').textContent  = floorArea.toFixed(2);
+    document.getElementById('est-floor-tiles').textContent = floorTiles;
+    document.getElementById('est-wall-area').textContent   = totalWallArea.toFixed(2);
+    document.getElementById('est-wall-tiles').textContent  = wallTiles;
+
+    const floorPrice = parseFloat(document.getElementById('floor-tile-price').value) || 0;
+    const wallPrice  = parseFloat(document.getElementById('wall-tile-price').value)  || 0;
+    const floorCost  = floorPrice > 0 ? Math.round(floorArea     * waste * floorPrice) : null;
+    const wallCost   = wallPrice  > 0 ? Math.round(totalWallArea * waste * wallPrice)  : null;
+    const fmt = n => n.toLocaleString('uk-UA');
+
+    document.getElementById('est-floor-cost').textContent = floorCost !== null ? fmt(floorCost) : '—';
+    document.getElementById('est-wall-cost').textContent  = wallCost  !== null ? fmt(wallCost)  : '—';
+
+    const tileTotal = (floorCost ?? 0) + (wallCost ?? 0);
+    document.getElementById('est-tiles-total').textContent =
+        (floorCost !== null || wallCost !== null) ? fmt(tileTotal) : '—';
+
+    const AQUA_SHEET   = 2.4 * 0.9;
+    const AQUA_PRICE   = 2198;
+    const RIGIPS_SHEET = 2.5 * 1.2;
+    const RIGIPS_PRICE = 499;
+
+    const wetZoneArea = W * L;
+    const dryZoneArea = Math.max(0, totalWallArea - wetZoneArea);
+
+    const aquaAll  = Math.ceil(totalWallArea * waste / AQUA_SHEET);
+    const aquaWet  = Math.ceil(wetZoneArea   * waste / AQUA_SHEET);
+    const rigAll   = Math.ceil(totalWallArea * waste / RIGIPS_SHEET);
+    const rigWet   = Math.ceil(dryZoneArea   * waste / RIGIPS_SHEET);
+
+    document.getElementById('est-aqua-all').textContent          = aquaAll;
+    document.getElementById('est-aqua-all-price').textContent    = fmt(aquaAll * AQUA_PRICE);
+    document.getElementById('est-aqua-wet').textContent          = aquaWet;
+    document.getElementById('est-aqua-wet-price').textContent    = fmt(aquaWet * AQUA_PRICE);
+    document.getElementById('est-rigips-all').textContent        = rigAll;
+    document.getElementById('est-rigips-all-price').textContent  = fmt(rigAll * RIGIPS_PRICE);
+    document.getElementById('est-rigips-wet').textContent        = rigWet;
+    document.getElementById('est-rigips-wet-price').textContent  = fmt(rigWet * RIGIPS_PRICE);
+}
+updateEstimate();
+
+// ─── Render loop ─────────────────────────────────────────────────────────────
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+}
+animate();
+
+// ─── Tile URL panel ───────────────────────────────────────────────────────────
+function applyTileUrl(url) {
+    const status = document.getElementById('tile-status');
+    status.style.color = '#aaa';
+    status.textContent = 'Loading…';
+    const loader = new THREE.ImageLoader();
+    loader.setCrossOrigin('anonymous');
+    loader.load(
+        url,
+        (img) => {
+            _buildTileCanvas(img);
+            status.style.color = '#7ecfff';
+            status.textContent = 'Applied ✓';
+        },
+        undefined,
+        () => {
+            status.style.color = '#ff7070';
+            status.textContent = 'Error: could not load image';
+        }
+    );
+}
+
+document.getElementById('tile-apply').addEventListener('click', () => {
+    const url = document.getElementById('tile-url').value.trim();
+    if (url) applyTileUrl(url);
+});
+document.getElementById('tile-url').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('tile-apply').click();
+});
+
+function parseTileValue(val) {
+    const [w, h] = val.split(',').map(Number);
+    return { w, h };
+}
+document.getElementById('floor-size').addEventListener('change', (e) => {
+    const { w, h } = parseTileValue(e.target.value);
+    updateFloorTiles(w, h);
+    updateEstimate();
+});
+document.getElementById('wall-size').addEventListener('change', (e) => {
+    const { w, h } = parseTileValue(e.target.value);
+    updateWallTiles(w, h);
+    updateEstimate();
+});
+
+function applyRoomParams() {
+    const newL = parseFloat(document.getElementById('room-length').value);
+    if (isNaN(newL)) { return; }
+    roomL = Math.max(0.5, Math.min(4.0, newL));
+    buildRoom();
+    updateFloorTiles(_floorTW, _floorTH);
+    updateWallTiles(_wallTW, _wallTH);
+    updateEstimate();
+}
+
+document.getElementById('room-apply').addEventListener('click', applyRoomParams);
+
+['room-length'].forEach(id => {
+    document.getElementById(id).addEventListener('input', applyRoomParams);
+});
+
+['floor-tile-price', 'wall-tile-price'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateEstimate);
+});
+
+// ─── Panel collapse ───────────────────────────────────────────────────────────
+document.querySelectorAll('.panel-hdr').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+        hdr.closest('.panel').classList.toggle('collapsed');
+    });
+});
+if (window.innerWidth <= 768) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.add('collapsed'));
+}
+
+document.getElementById('show-aqua').addEventListener('change', (e) => {
+    _aquaMeshes.forEach(m => m.visible = e.target.checked);
+});
+document.getElementById('show-rigips').addEventListener('change', (e) => {
+    _rigipsMeshes.forEach(m => m.visible = e.target.checked);
+});
+</script>
+</body>
+</html>
